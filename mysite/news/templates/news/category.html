@@ -22,7 +22,7 @@
                   {% autoescape off %}
                   <p class="card-text">{{item.content|truncatewords:50}}</p>
                   {% endautoescape %}
-                    <a href="#" class="btn btn-primary ">Перейти</a>
+                    <a href="{{item.get_absolute_url}}" class="btn btn-primary ">Перейти</a>
                 </div>
               </div>
             </div>
