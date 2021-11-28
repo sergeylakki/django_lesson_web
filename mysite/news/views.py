@@ -1,5 +1,6 @@
 from django.db.models.base import Model
 from django.db.models import F
+from django.db.models.query import QuerySet
 from django.forms import forms
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
@@ -7,16 +8,17 @@ from .models import Category, News
 from .forms import NewsForm
 from django.views.generic import ListView, DetailView, CreateView
 from django.urls import reverse_lazy
+from .utils import MymMxin
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-
-class HomeNews(ListView):
+class HomeNews(MymMxin,ListView):
     model = News
     template_name = "news/news_list.html"#не обязательно
     contex_object_name = "object_list"#Не обязательно имя переменной
     extra_content = {'title': "Главная"}#Только для статичных данных
-
-
+    queryset = News.objects.filter(is_published=True).select_related("category")
+    mixin_prop = 'hello world '
     #Перекдача доп аргументов в шаблон
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -25,8 +27,8 @@ class HomeNews(ListView):
 
 
     #Изменения дефолта выборки новостей
-    def get_queryset(self):
-        return News.objects.filter(is_published=True)
+   # def get_queryset(self):
+   #     return News.objects.filter(is_published=True).select_related("category")
 
 
 
@@ -36,7 +38,7 @@ class NewsByCategory(ListView):
 
     #Изменения дефолта выборки новостей
     def get_queryset(self):
-        return News.objects.filter(category_id=self.kwargs['category_id'], is_published=True)
+        return News.objects.filter(category_id=self.kwargs['category_id'], is_published=True).select_related("category")
 
 
        #Передача доп аргументов в шаблон
@@ -64,11 +66,11 @@ class ViewNews(DetailView):
 
 
 
-class CreateNews(CreateView):
+class CreateNews(LoginRequiredMixin, CreateView):
     form_class = NewsForm
     template_name = "news/add_news.html"
     #succsess_url = reverse_lazy("home")
-
+    login_url = '/'
 
 
 
