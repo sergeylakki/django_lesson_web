@@ -5,11 +5,48 @@ from django.forms import forms
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Category, News
-from .forms import NewsForm
+from .forms import NewsForm, UserRegisterForm,UserLoginForm
 from django.views.generic import ListView, DetailView, CreateView
 from django.urls import reverse_lazy
 from .utils import MymMxin
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
+from django.contrib import messages
+from django.contrib.auth import authenticate, get_user, login,logout
+
+def register(request):
+    if request.method =='POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            print(form)
+            form.save()
+            messages.success(request,'Вы успешно зарегестрировались  ')
+            return redirect('login')
+        else:
+            messages.error(request,'Ошибка регистрации  ')
+    else:    
+        form = UserRegisterForm()
+    return render(request, "news/register.html",{"form":form})
+
+def user_logout(request):
+    logout(request)
+    return redirect('home')
+
+
+def user_login(request):
+    if request.method == 'POST':
+        print("Hello")
+        form = UserLoginForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            return redirect('home')
+            
+        else:
+            messages.error(request,'Ошибка входа ')
+    else:   
+        form = UserLoginForm() 
+    return render(request, "news/login.html",{"form":form})
 
 
 class HomeNews(MymMxin,ListView):
@@ -19,6 +56,8 @@ class HomeNews(MymMxin,ListView):
     extra_content = {'title': "Главная"}#Только для статичных данных
     queryset = News.objects.filter(is_published=True).select_related("category")
     mixin_prop = 'hello world '
+    paginate_by = 2
+
     #Перекдача доп аргументов в шаблон
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -35,7 +74,7 @@ class HomeNews(MymMxin,ListView):
 class NewsByCategory(ListView):
     model = News
     allow_empty = False#делает 404 при пустом списке
-
+    paginate_by = 2
     #Изменения дефолта выборки новостей
     def get_queryset(self):
         return News.objects.filter(category_id=self.kwargs['category_id'], is_published=True).select_related("category")
