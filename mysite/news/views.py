@@ -5,7 +5,7 @@ from django.forms import forms
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Category, News
-from .forms import NewsForm, UserRegisterForm,UserLoginForm
+from .forms import NewsForm, UserRegisterForm,UserLoginForm, ContactForm
 from django.views.generic import ListView, DetailView, CreateView
 from django.urls import reverse_lazy
 from .utils import MymMxin
@@ -13,6 +13,24 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user, login,logout
+from django.core.mail import send_mail
+
+
+def send_mail(request):    
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            mail = send_mail(form.cleaned_data['subject'],form.cleaned_data['content'],'uy2_log.mail.ru',['sergeylakki@mail.ru'], fail_silently=False)
+            if mail:
+                messages.success(request,'Письмо отправлено')
+                return redirect("home")
+            else:
+                messages.error(request,'Ошибка отправки ')
+        else:
+            messages.error(request,'Ошибка формы ')
+    else:
+        form = ContactForm()
+    return render(request, "news/send_mail.html",{"form": form})
 
 def register(request):
     if request.method =='POST':
